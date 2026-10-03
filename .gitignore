@@ -13,3 +13,10 @@ __pycache__/
 # Media and Static files uploaded during testing
 /media/
 staticfiles/
+
+# Database
+db.sqlite3
+*.sqlite3
+
+# For IDE
+.idea/
