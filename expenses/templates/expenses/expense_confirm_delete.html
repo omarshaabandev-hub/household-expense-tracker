@@ -1,0 +1,25 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}تأكيد الحذف{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger shadow-sm rounded-3">
+            <div class="card-body p-4 text-center">
+                <i class="fa-solid fa-triangle-exclamation text-danger fa-3x mb-3"></i>
+                <h4 class="fw-bold mb-3">هل أنت تأكد من حذف هذا المصروف؟</h4>
+                <p class="text-muted">
+                    أنت على وشك حذف المصروف <strong>"{{ expense.title }}"</strong> بمبلغ <strong>{{ expense.amount }} ج.م</strong>. لا يمكن التراجع عن هذا الإجراء.
+                </p>
+
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <a href="{% url 'expense-list' %}" class="btn btn-outline-secondary px-4 me-2">إلغاء</a>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">تأكيد الحذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
