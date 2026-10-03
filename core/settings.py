@@ -130,3 +130,7 @@ MAILERS = {
 }
 
 AUTH_USER_MODEL = 'expenses.User'
+
+LOGIN_REDIRECT_URL = 'expense-list'
+LOGOUT_REDIRECT_URL = 'login'
+LOGIN_URL = 'login'
