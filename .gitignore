@@ -1,0 +1,15 @@
+# Virtual Invironment
+venv/
+env/
+.venv/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+
+# Environment variables & secrets
+.env
+
+# Media and Static files uploaded during testing
+/media/
+staticfiles/
