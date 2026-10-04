@@ -1,0 +1,40 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}تحديد الميزانية الشهرية{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-4 text-primary fw-bold">
+                    <i class="fa-solid fa-wallet me-2"></i>تحديد الميزانية
+                </h3>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ field.errors|striptags }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'expense-list' %}" class="btn btn-outline-secondary px-4">إلغاء</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">حفظ الميزانية</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

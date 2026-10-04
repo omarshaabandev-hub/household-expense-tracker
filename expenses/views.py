@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .forms import UserRegisterForm, ExpenseForm
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.utils import timezone
+from .forms import UserRegisterForm, ExpenseForm, BudgetForm
 from django.contrib.auth import logout
-from .models import Expense
+from .models import Expense, Budget
 
 # Create your views here.
 def register_view(request):
@@ -25,8 +27,38 @@ def register_view(request):
 
 @login_required
 def expense_list_view(request):
+    today = timezone.now().date()
+
     expenses = Expense.objects.filter(user=request.user).order_by('-date', '-created_at')
-    return render(request, 'expenses/expense_list.html', {'expenses': expenses})
+
+    current_month_expenses = expenses.filter(
+        date__year=today.year,
+        date__month=today.month
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    budget_obj = Budget.objects.filter(
+        user=request.user,
+        month__year=today.year,
+        month__month=today.month
+    ).first()
+
+    budget_amount = budget_obj.amount if budget_obj else 0
+    remaining_budget = budget_amount - current_month_expenses
+
+    percentage = 0
+    if budget_amount > 0:
+        percentage = min(int((current_month_expenses / budget_amount) * 100), 100)
+
+    context = {
+        'expenses': expenses,
+        'current_month_expenses': current_month_expenses,
+        'budget_amount': budget_amount,
+        'remaining_budget': remaining_budget,  # تم تعديل الاسم هنا
+        'percentage': percentage,              # تم تعديل الاسم هنا
+    }
+
+    return render(request, 'expenses/expense_list.html', context)
+
 
 @login_required
 def expense_create_view(request):
@@ -76,6 +108,29 @@ def expense_delete_view(request, pk):
         return redirect('expense-list')
 
     return render(request, 'expenses/expense_confirm_delete.html', {'expense': expense})
+
+
+@login_required
+def set_budget_view(request):
+    if request.method == 'POST':
+        form = BudgetForm(request.POST)
+        if form.is_valid():
+            budget = form.save(commit=False)
+            budget.user = request.user
+
+            Budget.objects.update_or_create(
+                user=request.user,
+                month=budget.month,
+                defaults={'amount': budget.amount}
+            )
+            messages.success(request, 'تم تحديد الميزانية بنجاح!')
+            return redirect('expense-list')
+
+    else:
+        form = BudgetForm()
+
+    context = {'form': form}
+    return render(request, 'expenses/budget_form.html', context)
 
 
 def custom_logout_view(request):
