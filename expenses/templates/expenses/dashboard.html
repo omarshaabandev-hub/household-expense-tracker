@@ -1,0 +1,82 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📊 لوحة التحليل والتقارير</h2>
+        <a href="{% url 'expense-list' %}" class="btn btn-outline-primary">
+            <i class="fa-solid fa-arrow-right me-1"></i> العودة لقائمة المصاريف
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <!-- كارت الرسم البياني -->
+        <div class="col-md-8 col-lg-6 mb-4">
+            <div class="card shadow-sm p-4">
+                <h5 class="card-title text-center mb-4 font-weight-bold">توزيع المصاريف حسب الفئة</h5>
+                <div style="position: relative; height: 320px; width: 100%;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تضمين مكتبة Chart.js عبر CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // استلام البيانات الممررة من Django Views
+    const categories = {{ categories_json|safe }};
+    const totals = {{ totals_json|safe }};
+
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: categories,
+            datasets: [{
+                label: 'المبلغ الإجمالي (ج.م)',
+                data: totals,
+                backgroundColor: [
+                    '#FF6384', // وردي
+                    '#36A2EB', // أزرق
+                    '#FFCE56', // أصفر
+                    '#4BC0C0', // تاكواز
+                    '#9966FF', // بنفسجي
+                    '#FF9F40'  // برتقالي
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    rtl: true,
+                    labels: {
+                        font: {
+                            family: 'cairo, sans-serif',
+                            size: 13
+                        },
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    rtl: true,
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.raw || 0;
+                            return ` ${context.label}: ${value} ج.م`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -131,6 +132,30 @@ def set_budget_view(request):
 
     context = {'form': form}
     return render(request, 'expenses/budget_form.html', context)
+
+
+@login_required
+def dashboard_view(request):
+    user_expenses = Expense.objects.filter(user=request.user)
+
+    category_data = (
+        user_expenses.values('category__name')
+        .annotate(total=Sum('amount'))
+        .order_by('-total')
+    )
+
+    categories = [item['category__name'] for item in category_data]
+    totals = [float(item['total']) for item in category_data]
+
+    categories_json = json.dumps(categories)
+    totals_json = json.dumps(totals)
+
+    context = {
+        'categories_json': categories_json,
+        'totals_json': totals_json,
+    }
+
+    return render(request, 'expenses/dashboard.html', context)
 
 
 def custom_logout_view(request):
