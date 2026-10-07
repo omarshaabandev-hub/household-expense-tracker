@@ -1,4 +1,7 @@
 import json
+import csv
+from django.http import HttpResponse
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -32,6 +35,10 @@ def expense_list_view(request):
 
     expenses = Expense.objects.filter(user=request.user).order_by('-date', '-created_at')
 
+    paginator = Paginator(expenses, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     current_month_expenses = expenses.filter(
         date__year=today.year,
         date__month=today.month
@@ -54,8 +61,9 @@ def expense_list_view(request):
         'expenses': expenses,
         'current_month_expenses': current_month_expenses,
         'budget_amount': budget_amount,
-        'remaining_budget': remaining_budget,  # تم تعديل الاسم هنا
-        'percentage': percentage,              # تم تعديل الاسم هنا
+        'remaining_budget': remaining_budget, 
+        'percentage': percentage,     
+        'page_obj': page_obj,         
     }
 
     return render(request, 'expenses/expense_list.html', context)
@@ -156,6 +164,43 @@ def dashboard_view(request):
     }
 
     return render(request, 'expenses/dashboard.html', context)
+
+
+@login_required
+def export_expenses_csv(request):
+    # 1. إنشاء استجابة HTTP وتعيين نوع المحتوى والملف المرفق
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="expenses_report.csv"'
+
+    # 2. إضافة توقيع UTF-8 BOM لضمان قراءة اللغة العربية بوضوح في Excel و WPS
+    response.write('\ufeff'.encode('utf-8'))
+
+    writer = csv.writer(response)
+    
+    # 3. كتابة الصف الأول (عناوين الأعمدة)
+    writer.writerow(['العنوان', 'المبلغ (ج.م)', 'الفئة', 'التاريخ'])
+
+    # 4. جلب مصاريف المستخدم
+    expenses = Expense.objects.filter(user=request.user).order_by('-date')
+    
+    for expense in expenses:
+        category_name = expense.get_category_display() if hasattr(expense, 'get_category_display') else expense.category
+        writer.writerow([
+            expense.title,
+            expense.amount,
+            category_name if category_name else 'بدون فئة',
+            expense.date.strftime('%Y-%m-%d')
+        ])
+
+    return response
+
+
+@login_required
+def export_expenses_pdf_view(request):
+    expenses = Expense.objects.filter(user=request.user).order_by('-date')
+
+    context = {'expenses': expenses}
+    return render(request, 'expenses/pdf_report.html', context)
 
 
 def custom_logout_view(request):
