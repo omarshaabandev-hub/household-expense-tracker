@@ -9,7 +9,41 @@ from django.db.models import Sum
 from django.utils import timezone
 from .forms import UserRegisterForm, ExpenseForm, BudgetForm
 from django.contrib.auth import logout
-from .models import Expense, Budget
+from .models import Expense, Budget, Category
+# for rest views
+from rest_framework import viewsets, permissions
+from .serializers import CategorySerializer, ExpenseSerializer, BudgetSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+
+
+# My rest views
+class ExpenseViewset(viewsets.ModelViewSet):
+    serializer_class = ExpenseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['category', 'date']
+    search_fields = ['title', 'description']
+    ordering_fields = ['amount', 'date']
+    ordering = ['-date']
+
+    def get_queryset(self):
+        return Expense.objects.filter(user=self.request.user).select_related('category')
+
+class CategoryViewset(viewsets.ModelViewSet):
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user)
+
+class BudgetViewSet(viewsets.ModelViewSet):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Budget.objects.filter(user=self.request.user)
+
 
 # Create your views here.
 def register_view(request):
